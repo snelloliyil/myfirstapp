@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My ADO Queries - Duck Creek</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f4f6;
+            color: #333;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        header img {
+            width: 36px;
+            height: 36px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #0078d4;
+        }
+
+        header span {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #0078d4;
+            color: #fff;
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card-header svg {
+            flex-shrink: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead th {
+            background: #f0f6ff;
+            color: #0078d4;
+            padding: 0.75rem 1.25rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #d0e4f7;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.15s;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f0f6ff;
+        }
+
+        td {
+            padding: 0.85rem 1.25rem;
+            vertical-align: middle;
+        }
+
+        td a {
+            color: #0078d4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        td a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: #e6f2ff;
+            color: #0078d4;
+            border: 1px solid #b3d4f5;
+        }
+
+        .date {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .id-chip {
+            font-family: monospace;
+            font-size: 0.78rem;
+            color: #888;
+        }
+
+        footer {
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #999;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="6" fill="#0078d4"/>
+            <path d="M7 22L13 10l5 8 3-4 5 8H7z" fill="white" opacity="0.9"/>
+        </svg>
+        <h1>My Queries &mdash; Duck Creek</h1>
+        <span>org: dcteng &nbsp;|&nbsp; project: Duck Creek</span>
+    </header>
+
+    <div class="card">
+        <div class="card-header">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="14" height="14" rx="2" stroke="white" stroke-width="1.5"/>
+                <line x1="4" y1="5.5" x2="12" y2="5.5" stroke="white" stroke-width="1.5"/>
+                <line x1="4" y1="8.5" x2="12" y2="8.5" stroke="white" stroke-width="1.5"/>
+                <line x1="4" y1="11.5" x2="9" y2="11.5" stroke="white" stroke-width="1.5"/>
+            </svg>
+            My Queries (2)
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Query Name</th>
+                    <th>Type</th>
+                    <th>Created</th>
+                    <th>Last Modified</th>
+                    <th>Last Executed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="id-chip">1</td>
+                    <td>
+                        <a href="https://dev.azure.com/DCTEng/web/qr.aspx?pguid=9cead1d1-528e-48b1-a0bf-f916cddcfb8b&qid=c41b06dc-0a84-49c2-ab40-ffc46bd0d5ab" target="_blank">
+                            SKN - Tickets All P1s
+                        </a>
+                    </td>
+                    <td><span class="badge">flat</span></td>
+                    <td class="date">2026-03-19</td>
+                    <td class="date">2026-03-24</td>
+                    <td class="date">2026-04-23</td>
+                </tr>
+                <tr>
+                    <td class="id-chip">2</td>
+                    <td>
+                        <a href="https://dev.azure.com/DCTEng/web/qr.aspx?pguid=9cead1d1-528e-48b1-a0bf-f916cddcfb8b&qid=c70d4b28-0dfb-4593-aa8a-b9528f46a38d" target="_blank">
+                            SKN - Tickets with Customer Ticket Associated
+                        </a>
+                    </td>
+                    <td><span class="badge">flat</span></td>
+                    <td class="date">2026-03-23</td>
+                    <td class="date">2026-03-23</td>
+                    <td class="date">2026-03-23</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        Data sourced from Azure DevOps &middot; Duck Creek project &middot; dcteng org
+    </footer>
+
+</body>
+</html>

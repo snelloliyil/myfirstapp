@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket List - Duck Creek</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f4f6;
+            color: #333;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        header h1 { font-size: 1.5rem; color: #0078d4; }
+        header span { font-size: 0.9rem; color: #666; margin-left: auto; }
+
+        /* Filter card */
+        .filter-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-card h2 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .filter-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .date-filter-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .date-filter-row .filter-group { flex-shrink: 0; }
+
+        .date-filter-row select {
+            padding: 0.5rem 0.65rem;
+            border: 1.5px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            color: #333;
+            min-width: 140px;
+        }
+
+        .date-filter-row select:focus { border-color: #0078d4; }
+
+        .date-input {
+            padding: 0.5rem 0.65rem;
+            border: 1.5px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            outline: none;
+            color: #333;
+            transition: border-color 0.15s;
+            width: 150px;
+        }
+
+        .date-input:focus { border-color: #0078d4; }
+
+        .date-sep {
+            font-size: 0.85rem;
+            color: #888;
+            padding-bottom: 0.5rem;
+            white-space: nowrap;
+        }
+
+        #date-to-group { display: none; }
+
+        .filter-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+        .filter-group label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .filter-group select {
+            padding: 0.5rem 0.65rem;
+            border: 1.5px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            color: #333;
+        }
+
+        .filter-group select:focus { border-color: #0078d4; }
+
+        /* Multi-select styling */
+        .filter-group select[multiple] {
+            height: 120px;
+            padding: 0.35rem;
+        }
+
+        .filter-group select[multiple] option {
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        .filter-group select[multiple] option:checked {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        .filter-hint {
+            font-size: 0.73rem;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        /* Area path tree */
+        .area-tree {
+            border: 1.5px solid #d0d7de;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .area-node {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.87rem;
+            user-select: none;
+            transition: background 0.1s;
+            white-space: nowrap;
+        }
+
+        .area-node:hover { background: #f0f6ff; }
+
+        .area-node.selected {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        .area-node .toggle {
+            width: 14px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            color: #888;
+        }
+
+        .area-node.selected .toggle { color: rgba(255,255,255,0.8); }
+
+        .area-node .label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+
+        .area-children { display: none; }
+        .area-children.open { display: block; }
+
+        /* Action row */
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-search {
+            padding: 0.55rem 1.4rem;
+            background: #0078d4;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+        }
+
+        .btn-search:hover { background: #005fa3; }
+        .btn-search:disabled { background: #94b8d4; cursor: not-allowed; }
+
+        .btn-clear {
+            padding: 0.55rem 1rem;
+            background: #fff;
+            color: #555;
+            border: 1.5px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .btn-clear:hover { border-color: #0078d4; color: #0078d4; }
+
+        .result-count { font-size: 0.85rem; color: #666; margin-left: auto; }
+
+        /* Results table */
+        #results-section { display: none; }
+
+        .results-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .results-header {
+            background: #0078d4;
+            color: #fff;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 900px;
+        }
+
+        thead th {
+            background: #f0f6ff;
+            color: #0078d4;
+            padding: 0.65rem 0.9rem;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #d0e4f7;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        thead th:hover { background: #e0eeff; }
+
+        thead th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.75rem; }
+        thead th.sorted-asc .sort-icon::after { content: ' ▲'; opacity: 1; }
+        thead th.sorted-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
+
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.12s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #f8faff; }
+
+        td { padding: 0.6rem 0.9rem; vertical-align: middle; }
+
+        .td-id { white-space: nowrap; }
+        .td-id a { color: #0078d4; font-weight: 700; font-family: monospace; text-decoration: none; }
+        .td-id a:hover { text-decoration: underline; }
+
+        .td-title { max-width: 280px; }
+        .td-title span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .td-date { white-space: nowrap; color: #555; font-size: 0.82rem; }
+        .td-assignee { white-space: nowrap; font-size: 0.83rem; }
+        .td-area { font-size: 0.8rem; color: #555; max-width: 180px; word-break: break-all; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-type { background: #e6f2ff; color: #0078d4; border: 1px solid #b3d4f5; }
+        .badge-New { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+        .badge-Active { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .badge-Closed { background: #eeeeee; color: #616161; border: 1px solid #bdbdbd; }
+        .badge-Resolved { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .badge-Removed { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+        .badge-state { background: #f3e5f5; color: #6a1b9a; border: 1px solid #ce93d8; }
+
+        .cust-priority { text-align: center; font-size: 1rem; }
+
+        .loading-msg, .error-msg, .empty-msg {
+            padding: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .error-msg { color: #c62828; }
+        .empty-msg { color: #888; }
+
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+
+        .spinner-dark {
+            border-color: rgba(0,120,212,0.3);
+            border-top-color: #0078d4;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    </style>
+</head>
+<body>
+
+<header>
+    <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="6" fill="#0078d4"/>
+        <path d="M7 22L13 10l5 8 3-4 5 8H7z" fill="white" opacity="0.9"/>
+    </svg>
+    <h1>Ticket List &mdash; Duck Creek</h1>
+    <span>org: dcteng</span>
+</header>
+
+<!-- Filters -->
+<div class="filter-card">
+    <h2>Filters</h2>
+    <div class="filter-grid">
+
+        <!-- Area Path tree -->
+        <div class="filter-group">
+            <label>Area Path</label>
+            <div class="area-tree" id="area-tree"></div>
+            <span class="filter-hint">Click to toggle; Ctrl/Cmd+click not needed — just click multiple</span>
+        </div>
+
+        <!-- Severity -->
+        <div class="filter-group">
+            <label>Severity</label>
+            <select id="filter-severity" multiple>
+                <option value="1 - Critical">1 - Critical</option>
+                <option value="2 - High">2 - High</option>
+                <option value="3 - Medium">3 - Medium</option>
+                <option value="4 - Low">4 - Low</option>
+            </select>
+            <span class="filter-hint">Ctrl/Cmd+click for multiple</span>
+        </div>
+
+        <!-- Priority -->
+        <div class="filter-group">
+            <label>Priority</label>
+            <select id="filter-priority" multiple>
+                <option value="1">1 - Highest</option>
+                <option value="2">2 - High</option>
+                <option value="3">3 - Medium</option>
+                <option value="4">4 - Low</option>
+            </select>
+            <span class="filter-hint">Ctrl/Cmd+click for multiple</span>
+        </div>
+
+        <!-- State -->
+        <div class="filter-group">
+            <label>State</label>
+            <select id="filter-state" multiple>
+                <option value="New">New</option>
+                <option value="Backlog">Backlog</option>
+                <option value="Committed">Committed</option>
+                <option value="Active">Active</option>
+                <option value="Ready for Testing">Ready for Testing</option>
+                <option value="Testing">Testing</option>
+                <option value="Documentation">Documentation</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Blocked">Blocked</option>
+                <option value="Approved">Approved</option>
+                <option value="At Risk">At Risk</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+                <option value="Removed">Removed</option>
+            </select>
+            <span class="filter-hint">Ctrl/Cmd+click for multiple</span>
+        </div>
+    </div>
+
+    <!-- Date filter -->
+    <div class="date-filter-row">
+        <div class="filter-group">
+            <label>Created Date</label>
+            <select id="date-mode" onchange="onDateModeChange()">
+                <option value="">— No date filter —</option>
+                <option value="gt">Greater than</option>
+                <option value="lt">Less than</option>
+                <option value="between">Between</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label id="date-from-label">Date</label>
+            <input type="date" id="date-from" class="date-input"/>
+        </div>
+        <div class="filter-group" id="date-to-group">
+            <label>To</label>
+            <input type="date" id="date-to" class="date-input"/>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <button class="btn-search" id="search-btn" onclick="runSearch()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.8"/>
+                <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            Search Tickets
+        </button>
+        <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
+        <span class="result-count" id="result-count"></span>
+    </div>
+</div>
+
+<!-- Results -->
+<div id="results-section">
+    <div class="results-card">
+        <div class="results-header" id="results-header">Results</div>
+        <div class="table-wrap">
+            <div id="table-container"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Area Path tree data ──────────────────────────────────────────────────────
+const AREA_TREE = [
+  { label: 'Duck Creek', path: 'Duck Creek', children: [
+    { label: 'Agile Release Management', path: 'Duck Creek\\Agile Release Management', children: [] },
+    { label: 'Billing', path: 'Duck Creek\\Billing', children: [
+      { label: 'Billing Maintenance', path: 'Duck Creek\\Billing\\Billing Maintenance', children: [] },
+      { label: 'Billing Tier 3 Support', path: 'Duck Creek\\Billing\\Billing Tier 3 Support', children: [] },
+      { label: 'Sentinels', path: 'Duck Creek\\Billing\\Sentinels', children: [] },
+    ]},
+    { label: 'Claims', path: 'Duck Creek\\Claims', children: [
+      { label: 'Claims Tier 3 Support', path: 'Duck Creek\\Claims\\Claims Tier 3 Support', children: [] },
+      { label: 'Claims-Party Provisioning', path: 'Duck Creek\\Claims\\Claims-Party Provisioning', children: [] },
+      { label: 'Desktop-Financials', path: 'Duck Creek\\Claims\\Desktop-Financials', children: [
+        { label: 'Earth', path: 'Duck Creek\\Claims\\Desktop-Financials\\Earth', children: [] },
+        { label: 'Falcons', path: 'Duck Creek\\Claims\\Desktop-Financials\\Falcons', children: [] },
+      ]},
+      { label: 'Platform', path: 'Duck Creek\\Claims\\Platform', children: [
+        { label: 'Phoenix', path: 'Duck Creek\\Claims\\Platform\\Phoenix', children: [] },
+        { label: 'Troopers', path: 'Duck Creek\\Claims\\Platform\\Troopers', children: [] },
+      ]},
+    ]},
+    { label: 'Clarity', path: 'Duck Creek\\Clarity', children: [
+      { label: 'Data Hub', path: 'Duck Creek\\Clarity\\Data Hub', children: [] },
+    ]},
+    { label: 'Content and International', path: 'Duck Creek\\Content and International', children: [
+      { label: 'Content Management', path: 'Duck Creek\\Content and International\\Content Management', children: [
+        { label: 'APAC - India', path: 'Duck Creek\\Content and International\\Content Management\\APAC - India', children: [] },
+        { label: 'APAC - Integration and Claims', path: 'Duck Creek\\Content and International\\Content Management\\APAC - Integration and Claims', children: [] },
+        { label: 'EMEA', path: 'Duck Creek\\Content and International\\Content Management\\EMEA', children: [] },
+      ]},
+    ]},
+    { label: 'DevEx', path: 'Duck Creek\\DevEx', children: [
+      { label: 'Team A - ODCH', path: 'Duck Creek\\DevEx\\Team A - ODCH', children: [] },
+    ]},
+    { label: 'DevOpsEx', path: 'Duck Creek\\DevOpsEx', children: [
+      { label: 'Automation', path: 'Duck Creek\\DevOpsEx\\Automation', children: [
+        { label: 'Automation Main', path: 'Duck Creek\\DevOpsEx\\Automation\\Automation Main', children: [] },
+        { label: 'Support', path: 'Duck Creek\\DevOpsEx\\Automation\\Support', children: [] },
+      ]},
+    ]},
+    { label: 'Digital Engagement', path: 'Duck Creek\\Digital Engagement', children: [
+      { label: 'Portal', path: 'Duck Creek\\Digital Engagement\\Portal', children: [] },
+    ]},
+    { label: 'Distribution', path: 'Duck Creek\\Distribution', children: [
+      { label: 'Alpha', path: 'Duck Creek\\Distribution\\Alpha', children: [] },
+      { label: 'Beta', path: 'Duck Creek\\Distribution\\Beta', children: [] },
+      { label: 'Delta', path: 'Duck Creek\\Distribution\\Delta', children: [] },
+      { label: 'Omega', path: 'Duck Creek\\Distribution\\Omega', children: [] },
+    ]},
+    { label: 'Distribution Management', path: 'Duck Creek\\Distribution Management', children: [] },
+    { label: 'Enterprise Architecture', path: 'Duck Creek\\Enterprise Architecture', children: [
+      { label: 'EA Core', path: 'Duck Creek\\Enterprise Architecture\\EA Core', children: [] },
+    ]},
+    { label: 'Party', path: 'Duck Creek\\Party', children: [] },
+    { label: 'Platform', path: 'Duck Creek\\Platform', children: [
+      { label: 'Platform Tier 3 Support', path: 'Duck Creek\\Platform\\Platform Tier 3 Support', children: [] },
+      { label: 'Quackinators', path: 'Duck Creek\\Platform\\Quackinators', children: [] },
+    ]},
+    { label: 'Policy', path: 'Duck Creek\\Policy', children: [
+      { label: 'Policy Tier 3 Support', path: 'Duck Creek\\Policy\\Policy Tier 3 Support', children: [] },
+    ]},
+    { label: 'Templates', path: 'Duck Creek\\Templates', children: [
+      { label: 'Commercial Lines', path: 'Duck Creek\\Templates\\Commercial Lines', children: [] },
+    ]},
+    { label: 'zArchive', path: 'Duck Creek\\zArchive', children: [
+      { label: 'DevOps', path: 'Duck Creek\\zArchive\\DevOps', children: [
+        { label: 'OnDemand', path: 'Duck Creek\\zArchive\\DevOps\\OnDemand', children: [
+          { label: 'DevOps Pac-man', path: 'Duck Creek\\zArchive\\DevOps\\OnDemand\\DevOps Pac-man', children: [] },
+        ]},
+      ]},
+      { label: 'Policy', path: 'Duck Creek\\zArchive\\Policy', children: [
+        { label: 'Stratus', path: 'Duck Creek\\zArchive\\Policy\\Stratus', children: [] },
+      ]},
+    ]},
+  ]}
+];
+
+// ── Build area tree UI ───────────────────────────────────────────────────────
+const selectedAreaPaths = new Set(['Duck Creek']);
+
+function buildTree(nodes, container, depth) {
+    nodes.forEach(node => {
+        const indent = depth * 16;
+        const hasChildren = node.children && node.children.length > 0;
+
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'area-node' + (selectedAreaPaths.has(node.path) ? ' selected' : '');
+        nodeEl.style.paddingLeft = (8 + indent) + 'px';
+        nodeEl.dataset.path = node.path;
+
+        nodeEl.innerHTML = `
+            <span class="toggle">${hasChildren ? '▶' : ' '}</span>
+            <span class="label" title="${node.path}">${node.label}</span>
+        `;
+
+        nodeEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Toggle expand if has children
+            if (hasChildren) {
+                const childContainer = nodeEl.nextElementSibling;
+                if (childContainer && childContainer.classList.contains('area-children')) {
+                    const isOpen = childContainer.classList.toggle('open');
+                    nodeEl.querySelector('.toggle').textContent = isOpen ? '▼' : '▶';
+                }
+            }
+            // Toggle selection
+            if (selectedAreaPaths.has(node.path)) {
+                selectedAreaPaths.delete(node.path);
+                nodeEl.classList.remove('selected');
+            } else {
+                selectedAreaPaths.add(node.path);
+                nodeEl.classList.add('selected');
+            }
+        });
+
+        container.appendChild(nodeEl);
+
+        if (hasChildren) {
+            const childContainer = document.createElement('div');
+            childContainer.className = 'area-children' + (depth === 0 ? ' open' : '');
+            if (depth === 0) nodeEl.querySelector('.toggle').textContent = '▼';
+            buildTree(node.children, childContainer, depth + 1);
+            container.appendChild(childContainer);
+        }
+    });
+}
+
+buildTree(AREA_TREE, document.getElementById('area-tree'), 0);
+
+// ── Date filter ──────────────────────────────────────────────────────────────
+function onDateModeChange() {
+    const mode = document.getElementById('date-mode').value;
+    const toGroup = document.getElementById('date-to-group');
+    const fromLabel = document.getElementById('date-from-label');
+    toGroup.style.display = mode === 'between' ? 'flex' : 'none';
+    fromLabel.textContent = mode === 'between' ? 'From' : 'Date';
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+function getSelected(selectId) {
+    return Array.from(document.getElementById(selectId).selectedOptions).map(o => o.value);
+}
+
+function clearFilters() {
+    document.querySelectorAll('.area-node.selected').forEach(n => n.classList.remove('selected'));
+    const root = document.querySelector('.area-node[data-path="Duck Creek"]');
+    if (root) root.classList.add('selected');
+    selectedAreaPaths.clear();
+    selectedAreaPaths.add('Duck Creek');
+    document.querySelectorAll('.area-node.selected').forEach(n => n.classList.remove('selected'));
+    const rootNode = document.querySelector('.area-node[data-path="Duck Creek"]');
+    if (rootNode) rootNode.classList.add('selected');
+    ['filter-severity', 'filter-priority', 'filter-state'].forEach(id => {
+        Array.from(document.getElementById(id).options).forEach(o => o.selected = false);
+    });
+    document.getElementById('date-mode').value = '';
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    onDateModeChange();
+    document.getElementById('result-count').textContent = '';
+    document.getElementById('results-section').style.display = 'none';
+}
+
+// ── Search ───────────────────────────────────────────────────────────────────
+async function runSearch() {
+    const btn = document.getElementById('search-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Searching...';
+    document.getElementById('result-count').textContent = '';
+
+    const params = new URLSearchParams();
+    const areaPaths = selectedAreaPaths.size > 0 ? [...selectedAreaPaths] : ['Duck Creek'];
+    areaPaths.forEach(p => params.append('areaPath[]', p));
+    getSelected('filter-severity').forEach(v => params.append('severity[]', v));
+    getSelected('filter-priority').forEach(v => params.append('priority[]', v));
+    getSelected('filter-state').forEach(v => params.append('state[]', v));
+
+    const dateMode = document.getElementById('date-mode').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo   = document.getElementById('date-to').value;
+    if (dateMode && dateFrom) {
+        params.set('dateMode', dateMode);
+        params.set('dateFrom', dateFrom);
+        if (dateMode === 'between' && dateTo) params.set('dateTo', dateTo);
+    }
+
+    try {
+        const res = await fetch('/api/tickets?' + params.toString());
+        const data = await res.json();
+
+        if (!res.ok) {
+            showError(data.error);
+        } else {
+            renderTable(data.items, data.total);
+        }
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="white" stroke-width="1.8"/><line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg> Search Tickets`;
+    }
+}
+
+// ── Table rendering ──────────────────────────────────────────────────────────
+let currentData = [];
+let sortCol = 'changedDate';
+let sortDir = 'desc';
+
+const COL_DEFS = [
+    { key: 'id',                  label: 'ID',                  sortable: true  },
+    { key: 'type',                label: 'Type',                sortable: true  },
+    { key: 'title',               label: 'Short Description',   sortable: true  },
+    { key: 'createdDate',         label: 'Created',             sortable: true  },
+    { key: 'changedDate',         label: 'Updated',             sortable: true  },
+    { key: 'assignedTo',          label: 'Assignee',            sortable: true  },
+    { key: 'customerHighPriority',label: 'Cust. Priority',      sortable: true  },
+    { key: 'areaPath',            label: 'Area Path',           sortable: true  },
+    { key: 'state',               label: 'State',               sortable: true  },
+];
+
+function renderTable(items, total) {
+    currentData = items;
+    const section = document.getElementById('results-section');
+    section.style.display = 'block';
+    document.getElementById('results-header').textContent = `${items.length} ticket${items.length !== 1 ? 's' : ''} (of ${total} matched)`;
+    document.getElementById('result-count').textContent = `${total} result${total !== 1 ? 's' : ''}`;
+    renderSortedTable();
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderSortedTable() {
+    const sorted = [...currentData].sort((a, b) => {
+        let av = a[sortCol], bv = b[sortCol];
+        if (sortCol === 'assignedTo') { av = a.assignedTo?.name || ''; bv = b.assignedTo?.name || ''; }
+        if (sortCol === 'customerHighPriority') { av = a.customerHighPriority ? 1 : 0; bv = b.customerHighPriority ? 1 : 0; }
+        if (av == null) av = '';
+        if (bv == null) bv = '';
+        if (av < bv) return sortDir === 'asc' ? -1 : 1;
+        if (av > bv) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const container = document.getElementById('table-container');
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="empty-msg">No tickets found matching the selected filters.</div>';
+        return;
+    }
+
+    const headerRow = COL_DEFS.map(col => {
+        const cls = col.key === sortCol ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+        const icon = col.sortable ? '<span class="sort-icon"></span>' : '';
+        const click = col.sortable ? `onclick="sortBy('${col.key}')"` : '';
+        return `<th class="${cls}" ${click}>${col.label}${icon}</th>`;
+    }).join('');
+
+    const rows = sorted.map(item => {
+        const stateClass = ['New','Active','Closed','Resolved','Removed'].includes(item.state)
+            ? `badge-${item.state}` : 'badge-state';
+        const typeLabel = (item.type || '').substring(0, 2).toUpperCase();
+        const shortTitle = escHtml(item.title || '');
+        const areaShort = (item.areaPath || '').replace('Duck Creek\\', '');
+
+        return `<tr>
+            <td class="td-id"><a href="ticket-query.html?id=${item.id}" title="#${item.id}">#${item.id}</a></td>
+            <td><span class="badge badge-type" title="${escHtml(item.type)}">${escHtml(item.type || '')}</span></td>
+            <td class="td-title"><span title="${shortTitle}">${shortTitle}</span></td>
+            <td class="td-date">${fmtDate(item.createdDate)}</td>
+            <td class="td-date">${fmtDate(item.changedDate)}</td>
+            <td class="td-assignee">${item.assignedTo ? escHtml(item.assignedTo.name) : '<span style="color:#bbb">—</span>'}</td>
+            <td class="cust-priority">${item.customerHighPriority ? '★' : ''}</td>
+            <td class="td-area" title="${escHtml(item.areaPath || '')}">${escHtml(areaShort)}</td>
+            <td><span class="badge ${stateClass}">${escHtml(item.state || '')}</span></td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `<table>
+        <thead><tr>${headerRow}</tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function sortBy(col) {
+    if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortCol = col;
+        sortDir = col === 'changedDate' || col === 'createdDate' ? 'desc' : 'asc';
+    }
+    renderSortedTable();
+}
+
+function showError(msg) {
+    document.getElementById('results-section').style.display = 'block';
+    document.getElementById('results-header').textContent = 'Error';
+    document.getElementById('table-container').innerHTML = `<div class="error-msg">Error: ${escHtml(msg)}</div>`;
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function escHtml(str) {
+    if (!str && str !== 0) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>
